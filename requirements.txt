@@ -1,0 +1,2 @@
+# 本项目零第三方依赖：后端仅用 Python 标准库（http.server / sqlite3 / unittest）。
+# 要求 Python >= 3.9。此文件仅为约定占位。
