@@ -431,3 +431,73 @@ input:focus, select:focus { outline: 2px solid rgba(158,43,37,.25); border-color
   .card { box-shadow: none; border: none; padding: 0 0 14px; }
   .view[hidden] { display: none !important; }
 }
+
+/* ---------- 奇门遁甲 ---------- */
+.qm-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  max-width: 720px; margin: 16px auto; position: relative;
+}
+.qm-cell {
+  background: rgba(255,252,245,.6); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; min-height: 118px; position: relative;
+}
+.qm-cell.center { background: rgba(158,43,37,.04); border-style: dashed; }
+.qm-head { font-size: 12px; color: var(--ink-soft); letter-spacing: .06em; }
+.qm-god { font-size: 12.5px; color: var(--indigo); margin-top: 3px; }
+.qm-star { font-weight: 700; font-size: 15px; margin-top: 2px; }
+.qm-door { font-size: 13.5px; margin-top: 2px; }
+.qm-door.good { color: var(--bamboo); font-weight: 700; }
+.qm-door.bad { color: var(--cinnabar); }
+.qm-gan { margin-top: 6px; font-size: 15px; letter-spacing: .1em; }
+.qm-gan .tian { font-weight: 700; }
+.qm-gan .sep { color: var(--line); margin: 0 5px; font-size: 12px; }
+.qm-gan .di { color: var(--ink-soft); }
+.qm-note { font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; }
+.qm-mid {
+  display: flex; gap: 22px; justify-content: center; text-align: center;
+  font-size: 13.5px; line-height: 1.8; color: var(--ink-soft);
+  padding: 6px 0 2px;
+}
+.qm-mid b { color: var(--ink); font-size: 15px; }
+
+/* ---------- 六爻 ---------- */
+.ly-coin-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.ly-coin {
+  width: 86px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px;
+  text-align: center; cursor: pointer; background: rgba(255,252,245,.6);
+  transition: transform .12s ease, border-color .12s ease;
+}
+.ly-coin:hover { transform: translateY(-2px); border-color: var(--cinnabar); }
+.ly-cn { font-size: 12px; color: var(--ink-soft); }
+.ly-backs { font-size: 13px; letter-spacing: 2px; margin: 4px 0; color: var(--gold); }
+.ly-val { font-size: 12px; color: var(--ink); }
+.ly-board {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  background: rgba(255,252,245,.55); border: 1px solid var(--line);
+  border-radius: 12px; padding: 16px 20px; margin: 14px 0;
+}
+.ly-gua-title { font-size: 14.5px; font-weight: 700; margin-bottom: 8px; letter-spacing: .08em; }
+.ly-gua { min-width: 250px; }
+.ly-yao { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+.ly-yao.dim { opacity: .75; }
+.ly-god { width: 34px; font-size: 12px; color: var(--indigo); }
+.ly-desc { width: 130px; font-size: 14px; }
+.ly-pos { width: 40px; font-size: 12px; color: var(--ink-soft); }
+.ly-line { width: 74px; height: 5px; position: relative; }
+.ly-line.yang { background: var(--ink); }
+.ly-line.yin { background: linear-gradient(to right, var(--ink) 0 30px, transparent 30px 44px, var(--ink) 44px 100%); }
+.ly-line.moving i {
+  position: absolute; right: -24px; top: -11px; font-style: normal; font-size: 15px;
+  color: var(--cinnabar); font-weight: 700;
+}
+.ly-shi, .ly-ying {
+  display: inline-block; font-size: 11px; padding: 0 5px; border-radius: 4px;
+  margin-left: 6px; vertical-align: 1px;
+}
+.ly-shi { background: var(--cinnabar); color: #fff; }
+.ly-ying { background: var(--indigo); color: #fff; }
+.ly-arrow { font-size: 26px; color: var(--ink-soft); }
+.ly-score { margin-left: auto; }
+
+/* ---------- 姓名学 ---------- */
+.name-badge { letter-spacing: .05em; }

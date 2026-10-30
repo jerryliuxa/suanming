@@ -25,6 +25,9 @@
     <a href="#/zodiac" data-view="zodiac">生肖流年</a>
     <a href="#/astro" data-view="astro">星座命盘</a>
     <a href="#/tarot" data-view="tarot">塔罗牌</a>
+    <a href="#/qimen" data-view="qimen">奇门遁甲</a>
+    <a href="#/liuyao" data-view="liuyao">六爻预测</a>
+    <a href="#/name" data-view="name">姓名测试</a>
   </nav>
   <div class="chart-badge" id="chartBadge" hidden></div>
 </header>
@@ -336,6 +339,116 @@
     </div>
     <div class="alert warn" style="max-width:820px">抽取前先静心，心里默念想问的事。牌义为通则解读，塔罗呈现的是当下能量快照，仅供娱乐与自省参考。</div>
     <div id="tarotResult"></div>
+  </section>
+
+  <!-- ============ 奇门遁甲 ============ -->
+  <section class="view" id="view-qimen" hidden>
+    <div class="layout-2col">
+      <div class="card form-card">
+        <h2 class="card-title">奇门遁甲 · 起课</h2>
+        <form id="qimenForm">
+          <div class="form-grid3">
+            <div class="form-row"><label>年（公历）</label><input type="number" id="q_y" placeholder="2026"></div>
+            <div class="form-row"><label>月</label><input type="number" id="q_m" min="1" max="12" placeholder="10"></div>
+            <div class="form-row"><label>日</label><input type="number" id="q_d" min="1" max="31" placeholder="31"></div>
+          </div>
+          <div class="form-row"><label>时辰（缺省按午时）</label>
+            <select id="q_hour"></select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">排盘起课</button>
+            <button type="button" class="btn ghost" onclick="App.qimenNow()">就用此刻</button>
+          </div>
+          <div class="alert err" id="qimenError" hidden></div>
+        </form>
+      </div>
+      <div class="card">
+        <h2 class="card-title">关于奇门遁甲</h2>
+        <p style="line-height:1.9;font-size:14.5px">奇门遁甲以节气定阴阳遁与三元局数，将三奇六仪布于九宫，
+        九星（天蓬～天英）为天盘、八门（休生伤杜景死惊开）为人盘、八神（值符～九天）为神盘，
+        值符随时干、值使随时辰。问事以「用神」落宫为核心：自身看日干宫、他人看时干宫、
+        财看生门与戊、事业看开门与值符、疾病看天芮。本盘为时家转盘拆补法，中五宫寄坤二，
+        23 点后日柱进次日。结果供传统文化研究娱乐参考。</p>
+      </div>
+    </div>
+    <div id="qimenResult"></div>
+  </section>
+
+  <!-- ============ 六爻预测 ============ -->
+  <section class="view" id="view-liuyao" hidden>
+    <div class="card form-card" style="max-width:760px">
+      <h2 class="card-title">六爻预测 · 起卦</h2>
+      <div class="form-row">
+        <label>起卦方式</label>
+        <div class="seg" id="ly_mode">
+          <button type="button" data-v="coins" class="on">摇钱起卦</button>
+          <button type="button" data-v="time">时间起卦</button>
+        </div>
+      </div>
+      <div class="form-row"><label>所占何事（决定用神）</label>
+        <select id="ly_cat">
+          <option value="general">一般之事（以世爻为主）</option>
+          <option value="wealth">求财（用神：妻财）</option>
+          <option value="career">事业功名（用神：官鬼）</option>
+          <option value="marriage_m">婚姻（男问，用神：妻财）</option>
+          <option value="marriage_f">婚姻（女问，用神：官鬼）</option>
+          <option value="study">考试学业（用神：父母）</option>
+          <option value="health">疾病（官鬼为病，子孙为药）</option>
+          <option value="lost">寻物寻人</option>
+          <option value="travel">出行</option>
+          <option value="lawsuit">官司诉讼</option>
+        </select>
+      </div>
+      <form id="liuyaoForm">
+        <div id="ly_coins_block">
+          <div class="form-row"><label>占卦日期</label><input type="date" id="ly_date"></div>
+          <div class="form-row">
+            <label>摇卦（铜钱以背记数：三背=老阳，两背=少阴，一背=少阳，零背=老阴；自初爻至上爻共六次）</label>
+            <div class="ly-coin-row" id="ly_coins"></div>
+            <div style="margin-top:10px"><button type="button" class="btn primary" onclick="App.liuyaoToss()">掷币起卦</button></div>
+          </div>
+        </div>
+        <div id="ly_time_block" hidden>
+          <div class="form-grid3">
+            <div class="form-row"><label>年（公历）</label><input type="number" id="ly_y" placeholder="2026"></div>
+            <div class="form-row"><label>月</label><input type="number" id="ly_m" min="1" max="12"></div>
+            <div class="form-row"><label>日</label><input type="number" id="ly_d" min="1" max="31"></div>
+          </div>
+          <div class="form-row"><label>时辰</label><select id="ly_hour"></select></div>
+        </div>
+        <div class="alert err" id="liuyaoError" hidden></div>
+      </form>
+    </div>
+    <div id="liuyaoResult"></div>
+  </section>
+
+  <!-- ============ 姓名测试 ============ -->
+  <section class="view" id="view-name" hidden>
+    <div class="layout-2col">
+      <div class="card form-card">
+        <h2 class="card-title">姓名测试 · 三才五格</h2>
+        <form id="nameForm">
+          <div class="form-grid2">
+            <div class="form-row"><label>姓（单姓或复姓）</label><input type="text" id="n_sur" maxlength="2" placeholder="如：李 / 欧阳"></div>
+            <div class="form-row"><label>名（单字或双字）</label><input type="text" id="n_giv" maxlength="2" placeholder="如：明 / 志强"></div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn primary">开始测算</button>
+            <button type="button" class="btn ghost" onclick="App.nameDemo()">示例</button>
+          </div>
+          <div class="alert err" id="nameError" hidden></div>
+        </form>
+      </div>
+      <div class="card">
+        <h2 class="card-title">关于三才五格</h2>
+        <p style="line-height:1.9;font-size:14.5px">五格剖象法以康熙字典笔画为基准：天格为姓氏笔画之数（单姓加一），
+        人格为姓末字与名首字之和（主运核心），地格为名字笔画之和（主38岁前），
+        外格主社交副运，总格主中晚年。各格数理按 81 数断吉凶，再以天、人、地三格的
+        个位五行（1、2木 3、4火 5、6土 7、8金 9、0水）组成三才配置论生克。
+        本引擎只收录常用字的康熙笔画，生僻字会明确提示。结果供文化娱乐参考。</p>
+      </div>
+    </div>
+    <div id="nameResult"></div>
   </section>
 </main>
 

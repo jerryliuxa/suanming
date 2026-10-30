@@ -101,16 +101,20 @@ python -m server.main 8800   # 自定义端口
 │       ├── zodiac.py    生肖流年（太岁关系）
 │       ├── western.py   西方占星（JPL 行星/上升中天/行运相位/配对）
 │       ├── tarot.py     塔罗牌（78 张牌义/每日一抽/三牌阵）
+│       ├── qimen.py     奇门遁甲（阴阳遁/三元局/九星八门八神）
+│       ├── liuyao.py    六爻预测（纳甲装卦/六亲六神/世应）
+│       ├── name_score.py 姓名学（康熙笔画/五格数理/三才）
 │       └── texts.py     批断文案模板库
 ├── web/                 前端（无构建，直接静态服务）
 │   ├── index.html
 │   ├── css/style.css
 │   └── js/app.js
-├── tests/               单元测试（71 项）
+├── tests/               单元测试（92 项）
 │   ├── test_calendar.py
 │   ├── test_engine.py
 │   ├── test_more.py
-│   └── test_western_tarot.py
+│   ├── test_western_tarot.py
+│   └── test_new_engines.py
 └── data/charts.db       运行时生成
 ```
 
@@ -129,7 +133,11 @@ python -m unittest discover tests -v
 起卦确定性）、合婚（评分范围与确定性）、生肖（2026 丙午年马值/鼠冲/牛害/羊合/兔破）；
 占星（JPL 地球根数推算太阳黄经与 Meeus 算法互差 <0.5°、朔日日月同经 <1°、
 太阳星座锚点、上升点地平高度=0 自检、北京时间/UT 时制回归、配对元素分支）、
-塔罗（78 张牌库唯一性、大牌 22 张、每日一抽确定性、三牌阵不重复、牌义完备性）。
+塔罗（78 张牌库唯一性、大牌 22 张、每日一抽确定性、三牌阵不重复、牌义完备性）；
+奇门（地盘三锚点表、阳遁一局丙寅时值符值使落宫携干、禽干寄芮、旬空驿马、伏吟判定、
+结构校验、晚子时换日）、六爻（乾为天六亲世应、游魂世四归魂世三、64 卦映射完备、
+摇币映射、大壮变归妹全链路、戊寅日戊戌月锚点）、姓名（五格公式四式、复姓、
+笔画抽查、未收录字报错、三才五行）。
 
 ## API 摘要
 
@@ -146,6 +154,9 @@ GET  /api/zodiac/:year          生肖流年（太岁关系）
 POST /api/astro                 西方占星本命盘（公历 y/m/d/hour/minute + lon/lat，with_today=1 附今日天象）
 POST /api/astro/pair            星座配对（{a, b}）
 POST /api/tarot                 塔罗（mode=daily: name/date；mode=three: question）
+POST /api/qimen                 奇门遁甲排盘（公历 y/m/d + hour 缺省午时）
+POST /api/liuyao                六爻起卦（mode=coins: date+coins[6]；mode=time: y/m/d/hour）
+POST /api/name                  姓名三才五格（surname + given）
 GET/POST/DELETE /api/charts     命例库
 GET  /api/jieqi/:year           二十四节气表
 ```

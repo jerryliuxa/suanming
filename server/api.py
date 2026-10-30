@@ -305,3 +305,93 @@ def api_tarot(body):
         except Exception:
             raise ApiError("日期格式非法")
     return tarot.daily_card(day, name)
+
+
+# ---------------- 奇门遁甲 / 六爻 / 姓名学 ----------------
+
+def api_qimen(body):
+    from .engine import qimen
+    try:
+        y, m, d = int(body.get("y")), int(body.get("m")), int(body.get("d"))
+    except (TypeError, ValueError):
+        raise ApiError("请填写起课日期")
+    if not (1901 <= y <= 2050 and 1 <= m <= 12 and 1 <= d <= 31):
+        raise ApiError("日期超出支持范围（1901～2050）")
+    hv = body.get("hour")
+    if hv is None or hv == "":
+        hour = None
+    else:
+        try:
+            hour = int(hv)
+        except (TypeError, ValueError):
+            raise ApiError("时辰格式非法")
+        if not (0 <= hour <= 23):
+            raise ApiError("时辰超出范围")
+    try:
+        return qimen.paipan_qimen(y, m, d, hour)
+    except Exception as e:
+        raise ApiError("奇门排盘失败：%s" % e, 500)
+
+
+LY_CATEGORIES = ("general", "wealth", "career", "marriage_m", "marriage_f",
+                 "study", "health", "lost", "travel", "lawsuit")
+
+
+def api_liuyao(body):
+    from .engine import liuyao
+    from datetime import datetime as _dt
+    category = body.get("category", "general")
+    if category not in LY_CATEGORIES:
+        raise ApiError("事项类型非法")
+    mode = body.get("mode", "coins")
+    dv = body.get("date")
+    try:
+        if dv:
+            yy, mm, dd = str(dv).split("-")
+            y, m, d = int(yy), int(mm), int(dd)
+        else:
+            now = _dt.now()
+            y, m, d = now.year, now.month, now.day
+    except Exception:
+        raise ApiError("日期格式非法")
+    if not (1901 <= y <= 2050 and 1 <= m <= 12 and 1 <= d <= 31):
+        raise ApiError("日期超出支持范围")
+    if mode == "time":
+        hv = body.get("hour")
+        try:
+            hour = int(hv)
+        except (TypeError, ValueError):
+            raise ApiError("时间起卦需要选择时辰")
+        if not (0 <= hour <= 23):
+            raise ApiError("时辰超出范围")
+        try:
+            return liuyao.divine_by_time(y, m, d, hour, category)
+        except Exception as e:
+            raise ApiError("起卦失败：%s" % e, 500)
+    counts = body.get("coins")
+    if not isinstance(counts, list) or len(counts) != 6:
+        raise ApiError("请提供六次掷币结果（自初爻起）")
+    try:
+        counts = [int(c) for c in counts]
+    except (TypeError, ValueError):
+        raise ApiError("掷币结果格式非法")
+    if any(c not in (0, 1, 2, 3) for c in counts):
+        raise ApiError("每次掷币背面数须为 0～3")
+    try:
+        return liuyao.divine_by_coins(counts, y, m, d, category)
+    except Exception as e:
+        raise ApiError("装卦失败：%s" % e, 500)
+
+
+def api_name_score(body):
+    from .engine import name_score
+    surname = str(body.get("surname") or "").strip()[:2]
+    given = str(body.get("given") or "").strip()[:2]
+    if not surname or not given:
+        raise ApiError("请填写姓氏与名字")
+    try:
+        return name_score.score_name(surname, given)
+    except ValueError as e:
+        raise ApiError(str(e))
+    except Exception as e:
+        raise ApiError("姓名评分失败：%s" % e, 500)

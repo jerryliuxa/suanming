@@ -116,6 +116,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, api.api_astro_pair(body))
             if path == "/api/tarot":
                 return self._send(200, api.api_tarot(body))
+            if path == "/api/qimen":
+                return self._send(200, api.api_qimen(body))
+            if path == "/api/liuyao":
+                return self._send(200, api.api_liuyao(body))
+            if path == "/api/name":
+                return self._send(200, api.api_name_score(body))
             return self._send(404, {"error": "接口不存在"})
         except ApiError as e:
             return self._send(e.status, {"error": str(e)})

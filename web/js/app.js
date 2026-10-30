@@ -862,10 +862,223 @@ const App = {
       (footer ? '<p class="fortune-brief" style="margin-top:14px">' + footer + "</p>" : "") + "</div>";
   },
 
+  /* ---------- 奇门遁甲 ---------- */
+  initQimen() {
+    const sel = document.getElementById("q_hour");
+    HOURS12.forEach(([v, label]) => { const o = document.createElement("option"); o.value = v; o.textContent = label; sel.appendChild(o); });
+    const now = new Date();
+    document.getElementById("q_y").value = now.getFullYear();
+    document.getElementById("q_m").value = now.getMonth() + 1;
+    document.getElementById("q_d").value = now.getDate();
+    document.getElementById("q_hour").value = String([23, 0].includes(now.getHours()) ? 0 : now.getHours() % 2 === 1 ? now.getHours() - 1 : now.getHours());
+    document.getElementById("qimenForm").addEventListener("submit", e => { e.preventDefault(); this.submitQimen(); });
+  },
+
+  qimenNow() {
+    const now = new Date();
+    document.getElementById("q_y").value = now.getFullYear();
+    document.getElementById("q_m").value = now.getMonth() + 1;
+    document.getElementById("q_d").value = now.getDate();
+    document.getElementById("q_hour").value = String([23, 0].includes(now.getHours()) ? 0 : now.getHours() % 2 === 1 ? now.getHours() - 1 : now.getHours());
+    this.submitQimen();
+  },
+
+  async submitQimen() {
+    const err = document.getElementById("qimenError"); err.hidden = true;
+    const body = {
+      y: parseInt(document.getElementById("q_y").value, 10),
+      m: parseInt(document.getElementById("q_m").value, 10),
+      d: parseInt(document.getElementById("q_d").value, 10),
+      hour: parseInt(document.getElementById("q_hour").value, 10),
+    };
+    if (!body.y || !body.m || !body.d) { err.textContent = "请填写完整日期。"; err.hidden = false; return; }
+    try {
+      const r = await this.api("/api/qimen", "POST", body);
+      this.renderQimen(r);
+    } catch (e) { err.textContent = e.message; err.hidden = false; }
+  },
+
+  renderQimen(r) {
+    const GONG_POS = { 4: "qm-tl", 9: "qm-tc", 2: "qm-tr", 3: "qm-ml", 5: "qm-mc", 7: "qm-mr", 8: "qm-bl", 1: "qm-bc", 6: "qm-br" };
+    const cell = p => {
+      const star = p.star ? '<div class="qm-star">' + esc(p.star) + "</div>" : "";
+      const god = p.god ? '<div class="qm-god">' + esc(p.god) + "</div>" : "";
+      const door = p.door ? '<div class="qm-door' + (["开门", "休门", "生门"].includes(p.door) ? " good" : ["死门", "惊门"].includes(p.door) ? " bad" : "") + '">' + esc(p.door) + "</div>" : "";
+      const isZF = (r.zhi_fu.gua === p.gua && p.gong !== 5 && p.star === r.zhi_fu.star);
+      return '<div class="qm-cell ' + (GONG_POS[p.gong] || "") + (p.gong === 5 ? " center" : "") + '">' +
+        '<div class="qm-head">' + p.gong + "宫 " + esc(p.sym) + esc(p.gua) + "</div>" + god + star + door +
+        '<div class="qm-gan"><span class="tian">' + esc(p.tian_gan || "—") + "</span><span class='sep'>/</span><span class='di'>" + esc(p.di_gan) + "</span></div>" +
+        (p.gong === 5 ? '<div class="qm-note">寄坤二</div>' : "") + "</div>";
+    };
+    const patterns = r.patterns.length
+      ? r.patterns.map(x => '<div class="alert warn">' + esc(x) + "</div>").join("") : "";
+    document.getElementById("qimenResult").innerHTML =
+      '<div class="card"><h2 class="card-title">' + esc(r.ju_name) + " · " + esc(r.term) + esc(r.yuan) + " · " + esc(r.date_text) + " " + esc(r.hour_zhi) + "时</h2>" +
+      '<div class="chart-head"><span class="ch-item">日柱 <b>' + esc(r.day_gz) + "</b></span>" +
+      '<span class="ch-item">时柱 <b>' + esc(r.hour_gz) + "</b></span>" +
+      '<span class="ch-item">' + esc(r.xun) + '（遁<b>' + esc(r.qiyi) + "</b>）</span>" +
+      '<span class="ch-item">值符 <b>' + esc(r.zhi_fu.star) + "</b> 落" + esc(r.zhi_fu.gua) + "宫</span>" +
+      '<span class="ch-item">值使 <b>' + esc(r.zhi_shi.door) + "</b> 落" + esc(r.zhi_shi.gua) + "宫" + esc(r.zhi_shi.note || "") + "</span>" +
+      '<span class="ch-item">空亡 <b>' + esc(r.xunkong.join("、")) + "</b></span>" +
+      '<span class="ch-item">驿马 <b>' + esc(r.yima) + "</b></span></div>" +
+      '<div class="qm-grid">' + r.palaces.map(cell).join("") +
+      '<div class="qm-mid"><div><b>' + esc(r.ju_name) + "</b><br>" + esc(r.futou) + "日符头<br>" + esc(r.xun) + "</div>" +
+      "<div>值符 " + esc(r.zhi_fu.star) + "<br>值使 " + esc(r.zhi_shi.door) + "<br>空亡 " + esc(r.xunkong.join("、")) + "<br>马星 " + esc(r.yima) + "</div></div></div>" +
+      patterns +
+      r.paragraphs.map(p => '<p style="line-height:1.95;font-size:15px;text-align:justify">' + esc(p) + "</p>").join("") +
+      '<p class="disclaimer">' + esc(r.note) + "</p></div>";
+  },
+
+  /* ---------- 六爻预测 ---------- */
+  _lyCoins: [1, 1, 1, 1, 1, 1],
+
+  initLiuyao() {
+    const sel = document.getElementById("ly_hour");
+    HOURS12.forEach(([v, label]) => { const o = document.createElement("option"); o.value = v; o.textContent = label; sel.appendChild(o); });
+    this.segInit("ly_mode", v => {
+      document.getElementById("ly_coins_block").hidden = v !== "coins";
+      document.getElementById("ly_time_block").hidden = v !== "time";
+    });
+    const now = new Date();
+    document.getElementById("ly_date").value = now.getFullYear() + "-" +
+      String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+    document.getElementById("ly_y").value = now.getFullYear();
+    document.getElementById("ly_m").value = now.getMonth() + 1;
+    document.getElementById("ly_d").value = now.getDate();
+    document.getElementById("ly_hour").value = String([23, 0].includes(now.getHours()) ? 0 : now.getHours() % 2 === 1 ? now.getHours() - 1 : now.getHours());
+    this.renderCoinButtons();
+  },
+
+  renderCoinButtons() {
+    const box = document.getElementById("ly_coins");
+    box.innerHTML = this._lyCoins.map((c, i) =>
+      '<div class="ly-coin" onclick="App.setCoin(' + i + ')" title="第' + (i + 1) + '爻（' + ["初", "二", "三", "四", "五", "上"][i] + '爻）">' +
+      '<div class="ly-cn">' + ["初", "二", "三", "四", "五", "上"][i] + '</div>' +
+      '<div class="ly-backs">' + ["⬤", "⬤⬤", "⬤⬤⬤", "字字字"][c] + "</div>" +
+      '<div class="ly-val">' + ({ 3: "老阳9 ○", 2: "少阴8 ‥", 1: "少阳7 ─", 0: "老阴6 ✕" }[c]) + "</div></div>").join("");
+  },
+
+  setCoin(i) {
+    this._lyCoins[i] = (this._lyCoins[i] + 1) % 4;
+    this.renderCoinButtons();
+  },
+
+  async liuyaoToss() {
+    this._lyCoins = Array.from({ length: 6 }, () => Math.floor(Math.random() * 4));
+    this.renderCoinButtons();
+    await this.submitLiuyao();
+  },
+
+  async submitLiuyao() {
+    const err = document.getElementById("liuyaoError"); err.hidden = true;
+    const cat = document.getElementById("ly_cat").value;
+    const mode = this.segValue("ly_mode");
+    let body;
+    if (mode === "coins") {
+      const dv = document.getElementById("ly_date").value;
+      if (!dv) { err.textContent = "请选择占卦日期。"; err.hidden = false; return; }
+      body = { mode, category: cat, date: dv, coins: this._lyCoins };
+    } else {
+      const y = parseInt(document.getElementById("ly_y").value, 10);
+      const m = parseInt(document.getElementById("ly_m").value, 10);
+      const d = parseInt(document.getElementById("ly_d").value, 10);
+      if (!y || !m || !d) { err.textContent = "请填写完整日期。"; err.hidden = false; return; }
+      body = { mode, category: cat, y, m, d, hour: parseInt(document.getElementById("ly_hour").value, 10) };
+    }
+    try {
+      const r = await this.api("/api/liuyao", "POST", body);
+      this.renderLiuyao(r);
+    } catch (e) { err.textContent = e.message; err.hidden = false; }
+  },
+
+  lyYaoHTML(yao, tag) {
+    const mark = yao.is_shi ? '<span class="ly-shi">世</span>' : yao.is_ying ? '<span class="ly-ying">应</span>' : "";
+    const sym = yao.yang ? '<div class="ly-line yang"></div>' : '<div class="ly-line yin"></div>';
+    const dong = "";
+    return '<div class="ly-yao">' +
+      '<div class="ly-god">' + esc(yao.god || "") + "</div>" +
+      '<div class="ly-desc">' + esc(yao.liuqin) + ' <b style="color:' + WX_COLOR[yao.wx] + '">' + esc(yao.gan + yao.zhi) + "</b>" + mark + dong + "</div>" +
+      sym + '<div class="ly-pos">' + tag + "</div></div>";
+  },
+
+  renderLiuyao(r) {
+    const ben = r.ben;
+    const posNames = ["上爻", "五爻", "四爻", "三爻", "二爻", "初爻"];
+    const benRows = [...ben.yaos].reverse().map((y, i) => {
+      const moving = r.moving.includes(y.pos);
+      const sym = y.yang ? '<div class="ly-line yang' + (moving ? " moving" : "") + '"><i>○</i></div>'
+                         : '<div class="ly-line yin' + (moving ? " moving" : "") + '"><i>✕</i></div>';
+      const mark = y.is_shi ? '<span class="ly-shi">世</span>' : y.is_ying ? '<span class="ly-ying">应</span>' : "";
+      return '<div class="ly-yao">' +
+        '<div class="ly-god">' + esc(y.god) + "</div>" +
+        '<div class="ly-desc">' + esc(y.liuqin) + ' <b style="color:' + WX_COLOR[y.wx] + '">' + esc(y.gan + y.zhi) + "</b>" + mark + "</div>" +
+        sym + '<div class="ly-pos">' + posNames[i] + "</div></div>";
+    }).join("");
+    const bianRows = r.bian ? [...r.bian.yaos].reverse().map((y, i) =>
+      '<div class="ly-yao dim"><div class="ly-god"></div>' +
+      '<div class="ly-desc">' + esc(y.liuqin) + ' <b style="color:' + WX_COLOR[y.wx] + '">' + esc(y.gan + y.zhi) + "</b></div>" +
+      (y.yang ? '<div class="ly-line yang"></div>' : '<div class="ly-line yin"></div>') +
+      '<div class="ly-pos">' + posNames[i] + "</div></div>").join("") : "";
+    document.getElementById("liuyaoResult").innerHTML =
+      '<div class="card"><h2 class="card-title">六爻卦象 · ' + esc(ben.name) + (r.bian ? " 变 " + esc(r.bian.name) : "") + "</h2>" +
+      '<div class="chart-head"><span class="ch-item">' + esc(ben.palace) + '宫</span>' +
+      '<span class="ch-item">占日 <b>' + esc(r.date_text) + "</b>（" + esc(r.month_gz) + "月 " + esc(r.day_gz) + "日）</span>" +
+      '<span class="ch-item">旬空 <b>' + esc(r.xunkong.join("、")) + "</b></span>" +
+      '<span class="ch-item">用神 <b>' + esc(r.yong.target) + "</b>（第" + r.yong.pos + "爻）</span></div>" +
+      (r.qigua_note ? '<p class="muted" style="font-size:13.5px">' + esc(r.qigua_note) + "</p>" : "") +
+      '<div class="ly-board"><div class="ly-gua"><div class="ly-gua-title">' + esc(ben.name) + "（本卦）</div>" + benRows + "</div>" +
+      (r.bian ? '<div class="ly-arrow">→</div><div class="ly-gua"><div class="ly-gua-title">' + esc(r.bian.name) + "（变卦）</div>" + bianRows + "</div>" : "") +
+      '<div class="ly-score"><div class="g-fortune-grid"><div class="score-ring" style="--p:' + r.score + ';--ring:' + this.ringColor(r.score) + '"><div class="sr-num">' + r.score + "<small>" + esc(r.grade) + "</small></div></div></div></div></div>" +
+      r.paragraphs.map(p => '<p style="line-height:1.95;font-size:15px;text-align:justify">' + esc(p) + "</p>").join("") +
+      '<p class="disclaimer">' + esc(r.note) + "</p></div>";
+  },
+
+  /* ---------- 姓名测试 ---------- */
+  initName() {
+    document.getElementById("nameForm").addEventListener("submit", e => { e.preventDefault(); this.submitName(); });
+  },
+
+  nameDemo() {
+    document.getElementById("n_sur").value = "欧阳";
+    document.getElementById("n_giv").value = "志强";
+    this.submitName();
+  },
+
+  async submitName() {
+    const err = document.getElementById("nameError"); err.hidden = true;
+    const surname = document.getElementById("n_sur").value.trim();
+    const given = document.getElementById("n_giv").value.trim();
+    if (!surname || !given) { err.textContent = "请填写姓氏与名字。"; err.hidden = false; return; }
+    try {
+      const r = await this.api("/api/name", "POST", { surname, given });
+      this.renderName(r);
+    } catch (e) { err.textContent = e.message; err.hidden = false; }
+  },
+
+  renderName(r) {
+    const LUCK_COLOR = { "吉": "var(--bamboo)", "半吉": "var(--gold)", "凶": "var(--cinnabar)" };
+    const rows = r.grids.map(g =>
+      "<tr><td><b>" + esc(g.name) + '</b><span class="muted" style="font-size:11.5px"> ' + esc(g.role) + "</span></td>" +
+      "<td><b>" + g.num + "</b>（" + esc(g.wx) + "）</td>" +
+      '<td style="color:' + LUCK_COLOR[g.luck] + '"><b>' + esc(g.luck) + "</b></td>" +
+      "<td>" + esc(g.meaning) + "</td></tr>").join("");
+    const strokeTxt = Object.entries(r.strokes.surname).map(([c, v]) => c + "=" + v).concat(
+      Object.entries(r.strokes.given).map(([c, v]) => c + "=" + v)).join("  ");
+    document.getElementById("nameResult").innerHTML =
+      '<div class="card"><h2 class="card-title">姓名测算 · ' + esc(r.surname) + esc(r.given) + "</h2>" +
+      '<div class="g-fortune-grid" style="margin-bottom:14px">' +
+      '<div class="score-ring" style="--p:' + r.score + ';--ring:' + this.ringColor(r.score) + ';width:110px;height:110px"><div class="sr-num">' + r.score + "<small>" + esc(r.grade) + "</small></div></div>" +
+      '<div><div>' + gradeBadge(r.grade) + '</div><p class="muted" style="font-size:14px;margin-top:6px">康熙笔画：' + esc(strokeTxt) +
+      "<br>三才配置：" + esc(r.sancai.tian + r.sancai.ren + r.sancai.di) + "</p></div></div>" +
+      '<table class="kv-table"><tr><td style="width:150px">五格</td><td style="width:130px">数理</td><td style="width:70px">吉凶</td><td>含义</td></tr>' + rows + "</table>" +
+      r.paragraphs.map(p => '<p style="line-height:1.95;font-size:15px;text-align:justify;margin-top:12px">' + esc(p) + "</p>").join("") +
+      '<p class="disclaimer">' + esc(r.note) + "</p></div>";
+  },
+
   /* ---------- 路由 ---------- */
   async route() {
     const hash = location.hash.replace("#/", "") || "home";
-    const views = ["home", "paipan", "pazi", "fortune", "today", "ziwei", "meihua", "hehun", "zodiac", "astro", "tarot"];
+    const views = ["home", "paipan", "pazi", "fortune", "today", "ziwei", "meihua", "hehun", "zodiac", "astro", "tarot", "qimen", "liuyao", "name"];
     const view = views.includes(hash) ? hash : "home";
     views.forEach(v => { document.getElementById("view-" + v).hidden = v !== view; });
     document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.dataset.view === view));
@@ -893,6 +1106,9 @@ const App = {
     this.initMeihua();
     this.initHehun();
     this.initAstro();
+    this.initQimen();
+    this.initLiuyao();
+    this.initName();
     this.updateBadge();
     window.addEventListener("hashchange", () => this.route());
     await this.route();
